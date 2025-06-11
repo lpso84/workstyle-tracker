@@ -1,7 +1,8 @@
+
 "use client";
 import React from 'react';
 import CalendarDay from './CalendarDay';
-import type { WorkState, WorkStates } from '@/app/page'; // Assuming types are exported from page.tsx or a types file
+import type { WorkState, WorkStates } from '@/app/page'; 
 import { Card } from '../ui/card';
 
 interface CalendarGridProps {
@@ -45,7 +46,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       const dayIsWeekend = isWeekend(d);
       const dayIsHoliday = holidayDays.includes(d);
       const workState = workStates[d];
-      const isDisabled = isCurrentActualMonth && d > today;
 
       cells.push(
         <CalendarDay
@@ -56,7 +56,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           isHoliday={dayIsHoliday}
           workState={workState}
           onCheckboxChange={onCheckboxChange}
-          isDisabled={isDisabled}
         />
       );
     }

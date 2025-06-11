@@ -1,3 +1,4 @@
+
 "use client";
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,7 +13,6 @@ interface CalendarDayProps {
   isHoliday: boolean;
   workState?: WorkState;
   onCheckboxChange: (day: number, type: WorkState) => void;
-  isDisabled: boolean; // To disable checkboxes for future days in current month
 }
 
 const CalendarDay: React.FC<CalendarDayProps> = ({
@@ -22,7 +22,6 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   isHoliday,
   workState,
   onCheckboxChange,
-  isDisabled,
 }) => {
   let cellBg = 'bg-card hover:bg-muted/20';
   let statusText = '';
@@ -55,9 +54,6 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   }
 
   const handleCheckedChange = (type: WorkState) => (checked: boolean | 'indeterminate') => {
-    // If unchecking, pass the type to potentially delete it.
-    // If checking, pass the type to set it.
-    // The logic in page.tsx will handle the toggle.
      onCheckboxChange(day, type);
   };
 
@@ -67,40 +63,38 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
       className={cn(
         "calendar-cell border rounded-lg p-2 transition-colors duration-150",
         cellBg,
-        isToday ? 'border-2 border-primary shadow-md' : 'border-border',
-        isDisabled && !isHoliday && !isWeekend ? 'opacity-60 cursor-not-allowed' : ''
+        isToday ? 'border-2 border-primary shadow-md' : 'border-border'
       )}
     >
       <div className={cn("font-medium text-sm mb-1 self-start", textColor, isToday ? "text-primary font-bold" : "")}>{day}</div>
       
       {!isWeekend && !isHoliday && (
         <div className="space-y-1.5 text-xs mt-auto">
-          <Label htmlFor={`ferias-${day}`} className={cn("flex items-center cursor-pointer", isDisabled ? "cursor-not-allowed" : "")}>
+          <Label htmlFor={`ferias-${day}`} className={cn("flex items-center cursor-pointer")}>
             <Checkbox
               id={`ferias-${day}`}
               checked={workState === 'ferias'}
               onCheckedChange={() => handleCheckedChange('ferias')(workState !== 'ferias')}
-              disabled={isDisabled}
               className="mr-1.5 size-4"
             />
             🏖️ Férias
           </Label>
-          <Label htmlFor={`casa-${day}`} className={cn("flex items-center cursor-pointer", isDisabled || workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
+          <Label htmlFor={`casa-${day}`} className={cn("flex items-center cursor-pointer", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
             <Checkbox
               id={`casa-${day}`}
               checked={workState === 'casa'}
               onCheckedChange={() => handleCheckedChange('casa')(workState !== 'casa')}
-              disabled={isDisabled || workState === 'ferias'}
+              disabled={workState === 'ferias'}
               className="mr-1.5 size-4"
             />
             🏠 Casa
           </Label>
-          <Label htmlFor={`escritorio-${day}`} className={cn("flex items-center cursor-pointer", isDisabled || workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
+          <Label htmlFor={`escritorio-${day}`} className={cn("flex items-center cursor-pointer", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
             <Checkbox
               id={`escritorio-${day}`}
               checked={workState === 'escritorio'}
               onCheckedChange={() => handleCheckedChange('escritorio')(workState !== 'escritorio')}
-              disabled={isDisabled || workState === 'ferias'}
+              disabled={workState === 'ferias'}
               className="mr-1.5 size-4"
             />
             🏢 Escritório
