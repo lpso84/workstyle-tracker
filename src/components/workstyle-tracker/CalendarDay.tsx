@@ -41,8 +41,8 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   } else if (isWeekend) {
     cellBg = 'bg-muted/30';
     textColor = 'text-muted-foreground';
-     statusText = 'Fim de Semana';
-     statusBg = 'bg-muted text-muted-foreground';
+    statusText = isMobile ? 'FDS' : 'Fim de Semana'; // Abreviado para mobile
+    statusBg = 'bg-muted text-muted-foreground';
   } else if (workState === 'casa') {
     cellBg = 'bg-green-500/10 hover:bg-green-500/20';
     statusText = 'Casa';
@@ -119,7 +119,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
                 />
                 🏖️ Férias
               </Label>
-              <Label htmlFor={`casa-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
+              <Label htmlFor={`casa-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs")}>
                 <Checkbox
                   id={`casa-${day}`}
                   checked={workState === 'casa'}
@@ -129,7 +129,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
                 />
                 🏠 Casa
               </Label>
-              <Label htmlFor={`escritorio-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
+              <Label htmlFor={`escritorio-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs")}>
                 <Checkbox
                   id={`escritorio-${day}`}
                   checked={workState === 'escritorio'}
