@@ -5,11 +5,9 @@ import { attendanceAdvisorRecommendations, type AttendanceAdvisorRecommendations
 import HeaderControls from '@/components/workstyle-tracker/HeaderControls';
 import HolidayInput from '@/components/workstyle-tracker/HolidayInput';
 import OfficeGoalInput from '@/components/workstyle-tracker/OfficeGoalInput';
-import LegendDisplay from '@/components/workstyle-tracker/LegendDisplay';
 import CalendarGrid from '@/components/workstyle-tracker/CalendarGrid';
 import StatsDashboard from '@/components/workstyle-tracker/StatsDashboard';
 import AlertMessage from '@/components/workstyle-tracker/AlertMessage';
-import AttendanceAdvisor from '@/components/workstyle-tracker/AttendanceAdvisor';
 import { useToast } from "@/hooks/use-toast";
 
 export type WorkState = 'casa' | 'escritorio' | 'ferias';
@@ -77,20 +75,6 @@ export default function WorkstyleTrackerPage() {
         delete newStates[key]; // Toggle off
       } else {
         newStates[key] = type; // Set new type
-        // If 'ferias' is selected, remove 'casa' or 'escritorio'
-        if (type === 'ferias') {
-          if (newStates[key] === 'casa' || newStates[key] === 'escritorio') {
-             // This condition is complex as it's already set to 'ferias'
-             // The logic should be: if setting to 'ferias', ensure others are off.
-             // If setting 'casa' or 'escritorio', ensure 'ferias' is off.
-             // The current logic in user code is fine where disabled state handles part of this.
-          }
-        } else { // If 'casa' or 'escritorio' is selected, remove the other if it was selected
-          if (type === 'casa' && newStates[key] === 'escritorio') delete newStates[key]; // This is wrong
-          if (type === 'escritorio' && newStates[key] === 'casa') delete newStates[key]; // This is wrong
-          // The current behavior is that selecting one type deselects the others implicitly
-          // except for 'ferias' which acts as an override
-        }
       }
       return newStates;
     });
@@ -187,8 +171,10 @@ export default function WorkstyleTrackerPage() {
       };
 
       try {
+        // This call is kept for now, but the component displaying it is removed.
+        // You might want to remove this logic entirely if AI recommendations are not needed.
         const result = await attendanceAdvisorRecommendations(aiInput);
-        setGenAIRecommendation(result);
+        setGenAIRecommendation(result); 
       } catch (error) {
         console.error("Error fetching AI recommendations:", error);
         toast({
@@ -200,15 +186,11 @@ export default function WorkstyleTrackerPage() {
         setIsGenAILoading(false);
       }
     };
-
-    // Call AI only if it's the current actual month or a future month.
-    // Or if we want to analyze past months as well, this condition can be removed.
-    // For now, let's assume analysis is always relevant.
+    
     fetchAIRecommendations();
 
   }, [metrics, officeGoalPercentage, toast]);
 
-  const isOverWfhThreshold = parseFloat(metrics.pctCasa) > 60;
 
   if (!currentDate) {
     return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>;
@@ -229,8 +211,6 @@ export default function WorkstyleTrackerPage() {
           <OfficeGoalInput officeGoalPercentage={officeGoalPercentage} onOfficeGoalChange={setOfficeGoalPercentage} />
         </div>
         
-        <LegendDisplay />
-
         <CalendarGrid
           currentYear={currentYear}
           currentMonth={currentMonth}
@@ -248,11 +228,9 @@ export default function WorkstyleTrackerPage() {
 
         <StatsDashboard metrics={metrics} />
         
-        <AttendanceAdvisor recommendations={genAIRecommendation} isLoading={isGenAILoading} />
-
         <AlertMessage
           pctCasa={metrics.pctCasa}
-          officeNeededForPolicy={metrics.officeNeeded} // this is for the 40% goal
+          officeNeededForPolicy={metrics.officeNeeded} 
           wfhLimit={60}
         />
       </div>
