@@ -80,14 +80,14 @@ export default function WorkstyleTrackerPage() {
     return d === 0 || d === 6;
   }, [currentYear, currentMonth, currentDate]);
 
-  const handleCheckboxChange = useCallback((day: number, type: WorkState) => {
+  const handleSetWorkState = useCallback((day: number, state?: WorkState) => {
     setWorkStates(prev => {
       const newStates = { ...prev };
       const key = `${day}`;
-      if (newStates[key] === type) {
-        delete newStates[key]; 
+      if (state) {
+        newStates[key] = state;
       } else {
-        newStates[key] = type; 
+        delete newStates[key];
       }
       return newStates;
     });
@@ -119,9 +119,7 @@ export default function WorkstyleTrackerPage() {
       };
     }
 
-    let casa = 0, office = 0, ferias = 0;
-    // const isCurrentActualMonth = currentMonth === actualMonth && currentYear === actualYear;
-    // const limitDay = isCurrentActualMonth ? today : daysInMonth;
+    let casa = 0, office = 0;
     
     let workFromHomeDaysForAI = 0;
     let workFromOfficeDaysForAI = 0;
@@ -136,8 +134,6 @@ export default function WorkstyleTrackerPage() {
       }
     }
     
-    // Iterate up to current day for casa and office counts if it's the current actual month
-    // Otherwise, count all days for simulations/future months
     const isCurrentActualMonthAndYear = currentMonth === actualMonth && currentYear === actualYear;
     const dayLimitForCurrentStats = isCurrentActualMonthAndYear ? today : daysInMonth;
 
@@ -146,7 +142,6 @@ export default function WorkstyleTrackerPage() {
         const st = workStates[d];
         if (st === 'casa') casa++;
         else if (st === 'escritorio') office++;
-        // ferias count is already done for the whole month (vacationDaysForAI)
       }
     }
     
@@ -169,7 +164,7 @@ export default function WorkstyleTrackerPage() {
       pctOffice: pctOffice.toFixed(1),
       casa, 
       office, 
-      ferias: vacationDaysForAI, // Use the full month vacation count for display
+      ferias: vacationDaysForAI,
       holidaysInMonth: holidayDays.length,
       totalWorkdays: totalWorkdaysInMonth, 
       targetOfficeMin,
@@ -179,43 +174,6 @@ export default function WorkstyleTrackerPage() {
       vacationDaysForAI, 
     };
   }, [currentMonth, currentYear, today, daysInMonth, actualMonth, actualYear, workStates, holidayDays, isWeekend, officeGoalPercentage, currentDate]);
-
-  // useEffect(() => {
-  //   const fetchAIRecommendations = async () => {
-  //     if (!metrics || !currentDate) return; 
-
-  //     setIsGenAILoading(true);
-  //     setGenAIRecommendation(null);
-
-  //     const aiInput: AttendanceAdvisorRecommendationsInput = {
-  //       workFromHomeDays: metrics.workFromHomeDaysForAI,
-  //       workFromOfficeDays: metrics.workFromOfficeDaysForAI,
-  //       vacationDays: metrics.vacationDaysForAI,
-  //       holidaysInMonth: metrics.holidaysInMonth,
-  //       totalWorkdaysInMonth: metrics.totalWorkdays,
-  //       officeDaysGoalPercentage: officeGoalPercentage,
-  //     };
-
-  //     try {
-  //       const result = await attendanceAdvisorRecommendations(aiInput);
-  //       setGenAIRecommendation(result); 
-  //     } catch (error) {
-  //       console.error("Error fetching AI recommendations:", error);
-  //       // toast({
-  //       //   title: "Erro do Consultor IA",
-  //       //   description: "Não foi possível obter as recomendações. Tente novamente mais tarde.",
-  //       //   variant: "destructive",
-  //       // });
-  //     } finally {
-  //       setIsGenAILoading(false);
-  //     }
-  //   };
-    
-  //   if (currentDate && metrics.totalWorkdays > 0) { 
-  //       fetchAIRecommendations();
-  //   }
-
-  // }, [metrics, officeGoalPercentage, toast, currentDate]);
 
 
   if (!currentDate) { 
@@ -244,11 +202,11 @@ export default function WorkstyleTrackerPage() {
           firstDayOfMonth={firstDayOfMonth}
           holidayDays={holidayDays}
           workStates={workStates}
-          onCheckboxChange={handleCheckboxChange}
+          onSetWorkState={handleSetWorkState}
           isWeekend={isWeekend}
-          // today={today} // No longer needed for individual day checks
-          // actualMonth={actualMonth} // No longer needed for individual day checks
-          // actualYear={actualYear} // No longer needed for individual day checks
+          today={today} 
+          actualMonth={actualMonth} 
+          actualYear={actualYear} 
           dayNames={dayNames}
         />
 
@@ -263,4 +221,3 @@ export default function WorkstyleTrackerPage() {
     </div>
   );
 }
-

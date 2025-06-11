@@ -12,7 +12,7 @@ interface CalendarGridProps {
   firstDayOfMonth: number;
   holidayDays: number[];
   workStates: WorkStates;
-  onCheckboxChange: (day: number, type: WorkState) => void;
+  onSetWorkState: (day: number, state?: WorkState) => void;
   isWeekend: (day: number) => boolean;
   today: number;
   actualMonth: number;
@@ -27,7 +27,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   firstDayOfMonth,
   holidayDays,
   workStates,
-  onCheckboxChange,
+  onSetWorkState,
   isWeekend,
   today,
   actualMonth,
@@ -55,7 +55,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           isWeekend={dayIsWeekend}
           isHoliday={dayIsHoliday}
           workState={workState}
-          onCheckboxChange={onCheckboxChange}
+          onSetWorkState={onSetWorkState}
         />
       );
     }
