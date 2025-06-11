@@ -2,14 +2,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { attendanceAdvisorRecommendations, type AttendanceAdvisorRecommendationsInput, type AttendanceAdvisorRecommendationsOutput } from '@/ai/flows/attendance-advisor';
+// import { attendanceAdvisorRecommendations, type AttendanceAdvisorRecommendationsInput, type AttendanceAdvisorRecommendationsOutput } from '@/ai/flows/attendance-advisor';
 import HeaderControls from '@/components/workstyle-tracker/HeaderControls';
 import HolidayInput from '@/components/workstyle-tracker/HolidayInput';
 import OfficeGoalInput from '@/components/workstyle-tracker/OfficeGoalInput';
 import CalendarGrid from '@/components/workstyle-tracker/CalendarGrid';
 import StatsDashboard from '@/components/workstyle-tracker/StatsDashboard';
 import AlertMessage from '@/components/workstyle-tracker/AlertMessage';
-import { useToast } from "@/hooks/use-toast";
+// import { useToast } from "@/hooks/use-toast";
 
 export type WorkState = 'casa' | 'escritorio' | 'ferias';
 export interface WorkStates { [key: string]: WorkState };
@@ -35,26 +35,25 @@ const monthNames = [
 const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export default function WorkstyleTrackerPage() {
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const [holidays, setHolidays] = useState('1,8,25');
   const [workStates, setWorkStates] = useState<WorkStates>({});
   
-  const [currentDate, setCurrentDate] = useState<Date | null>(null); // Initialize to null
-  // Default to January 2000 or similar placeholders, will be updated in useEffect
+  const [currentDate, setCurrentDate] = useState<Date | null>(null); 
   const [currentMonth, setCurrentMonth] = useState<number>(0); 
   const [currentYear, setCurrentYear] = useState<number>(2000); 
 
   const [officeGoalPercentage, setOfficeGoalPercentage] = useState(40);
 
-  const [genAIRecommendation, setGenAIRecommendation] = useState<AttendanceAdvisorRecommendationsOutput | null>(null);
-  const [isGenAILoading, setIsGenAILoading] = useState(false);
+  // const [genAIRecommendation, setGenAIRecommendation] = useState<AttendanceAdvisorRecommendationsOutput | null>(null);
+  // const [isGenAILoading, setIsGenAILoading] = useState(false);
 
   useEffect(() => {
     const now = new Date();
     setCurrentDate(now);
     setCurrentMonth(now.getMonth());
     setCurrentYear(now.getFullYear());
-  }, []); // Empty dependency array ensures this runs once on mount, client-side
+  }, []); 
 
   const today = useMemo(() => currentDate ? currentDate.getDate() : 0, [currentDate]);
   const actualMonth = useMemo(() => currentDate ? currentDate.getMonth() : 0, [currentDate]);
@@ -66,12 +65,12 @@ export default function WorkstyleTrackerPage() {
     .filter(h => !isNaN(h)), [holidays]);
 
   const daysInMonth = useMemo(() => {
-    if (!currentDate) return 0; // Return 0 or a sensible default if currentDate isn't set
+    if (!currentDate) return 0; 
     return new Date(currentYear, currentMonth + 1, 0).getDate();
   }, [currentYear, currentMonth, currentDate]);
 
   const firstDayOfMonth = useMemo(() => {
-    if (!currentDate) return 0; // Return 0 or a sensible default
+    if (!currentDate) return 0; 
     return new Date(currentYear, currentMonth, 1).getDay();
   }, [currentYear, currentMonth, currentDate]);
 
@@ -106,13 +105,13 @@ export default function WorkstyleTrackerPage() {
       }
       setCurrentYear(y);
       setWorkStates({}); 
-      setGenAIRecommendation(null); 
+      // setGenAIRecommendation(null); 
       return m;
     });
   }, [currentYear]);
 
   const metrics = useMemo<Metrics>(() => {
-    if (!currentDate) { // Ensure currentDate is available before calculating metrics
+    if (!currentDate) { 
       return {
         pctCasa: "0.0", pctOffice: "0.0", casa: 0, office: 0, ferias: 0,
         holidaysInMonth: 0, totalWorkdays: 0, targetOfficeMin: 0, officeNeeded: 0,
@@ -121,8 +120,8 @@ export default function WorkstyleTrackerPage() {
     }
 
     let casa = 0, office = 0, ferias = 0;
-    const isCurrentActualMonth = currentMonth === actualMonth && currentYear === actualYear;
-    const limitDay = isCurrentActualMonth ? today : daysInMonth;
+    // const isCurrentActualMonth = currentMonth === actualMonth && currentYear === actualYear;
+    // const limitDay = isCurrentActualMonth ? today : daysInMonth;
     
     let workFromHomeDaysForAI = 0;
     let workFromOfficeDaysForAI = 0;
@@ -136,13 +135,18 @@ export default function WorkstyleTrackerPage() {
         else if (st === 'ferias') vacationDaysForAI++;
       }
     }
+    
+    // Iterate up to current day for casa and office counts if it's the current actual month
+    // Otherwise, count all days for simulations/future months
+    const isCurrentActualMonthAndYear = currentMonth === actualMonth && currentYear === actualYear;
+    const dayLimitForCurrentStats = isCurrentActualMonthAndYear ? today : daysInMonth;
 
-    for (let d = 1; d <= limitDay; d++) {
+    for (let d = 1; d <= dayLimitForCurrentStats; d++) {
       if (!isWeekend(d) && !holidayDays.includes(d)) {
         const st = workStates[d];
         if (st === 'casa') casa++;
         else if (st === 'escritorio') office++;
-        else if (st === 'ferias') ferias++;
+        // ferias count is already done for the whole month (vacationDaysForAI)
       }
     }
     
@@ -165,7 +169,7 @@ export default function WorkstyleTrackerPage() {
       pctOffice: pctOffice.toFixed(1),
       casa, 
       office, 
-      ferias, 
+      ferias: vacationDaysForAI, // Use the full month vacation count for display
       holidaysInMonth: holidayDays.length,
       totalWorkdays: totalWorkdaysInMonth, 
       targetOfficeMin,
@@ -176,45 +180,45 @@ export default function WorkstyleTrackerPage() {
     };
   }, [currentMonth, currentYear, today, daysInMonth, actualMonth, actualYear, workStates, holidayDays, isWeekend, officeGoalPercentage, currentDate]);
 
-  useEffect(() => {
-    const fetchAIRecommendations = async () => {
-      if (!metrics || !currentDate) return; // Ensure metrics and currentDate are ready
+  // useEffect(() => {
+  //   const fetchAIRecommendations = async () => {
+  //     if (!metrics || !currentDate) return; 
 
-      setIsGenAILoading(true);
-      setGenAIRecommendation(null);
+  //     setIsGenAILoading(true);
+  //     setGenAIRecommendation(null);
 
-      const aiInput: AttendanceAdvisorRecommendationsInput = {
-        workFromHomeDays: metrics.workFromHomeDaysForAI,
-        workFromOfficeDays: metrics.workFromOfficeDaysForAI,
-        vacationDays: metrics.vacationDaysForAI,
-        holidaysInMonth: metrics.holidaysInMonth,
-        totalWorkdaysInMonth: metrics.totalWorkdays,
-        officeDaysGoalPercentage: officeGoalPercentage,
-      };
+  //     const aiInput: AttendanceAdvisorRecommendationsInput = {
+  //       workFromHomeDays: metrics.workFromHomeDaysForAI,
+  //       workFromOfficeDays: metrics.workFromOfficeDaysForAI,
+  //       vacationDays: metrics.vacationDaysForAI,
+  //       holidaysInMonth: metrics.holidaysInMonth,
+  //       totalWorkdaysInMonth: metrics.totalWorkdays,
+  //       officeDaysGoalPercentage: officeGoalPercentage,
+  //     };
 
-      try {
-        const result = await attendanceAdvisorRecommendations(aiInput);
-        setGenAIRecommendation(result); 
-      } catch (error) {
-        console.error("Error fetching AI recommendations:", error);
-        toast({
-          title: "Erro do Consultor IA",
-          description: "Não foi possível obter as recomendações. Tente novamente mais tarde.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsGenAILoading(false);
-      }
-    };
+  //     try {
+  //       const result = await attendanceAdvisorRecommendations(aiInput);
+  //       setGenAIRecommendation(result); 
+  //     } catch (error) {
+  //       console.error("Error fetching AI recommendations:", error);
+  //       // toast({
+  //       //   title: "Erro do Consultor IA",
+  //       //   description: "Não foi possível obter as recomendações. Tente novamente mais tarde.",
+  //       //   variant: "destructive",
+  //       // });
+  //     } finally {
+  //       setIsGenAILoading(false);
+  //     }
+  //   };
     
-    if (currentDate && metrics.totalWorkdays > 0) { // Only fetch if data is ready
-        fetchAIRecommendations();
-    }
+  //   if (currentDate && metrics.totalWorkdays > 0) { 
+  //       fetchAIRecommendations();
+  //   }
 
-  }, [metrics, officeGoalPercentage, toast, currentDate]);
+  // }, [metrics, officeGoalPercentage, toast, currentDate]);
 
 
-  if (!currentDate) { // Main loading guard
+  if (!currentDate) { 
     return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>;
   }
 
@@ -242,9 +246,9 @@ export default function WorkstyleTrackerPage() {
           workStates={workStates}
           onCheckboxChange={handleCheckboxChange}
           isWeekend={isWeekend}
-          today={today}
-          actualMonth={actualMonth}
-          actualYear={actualYear}
+          // today={today} // No longer needed for individual day checks
+          // actualMonth={actualMonth} // No longer needed for individual day checks
+          // actualYear={actualYear} // No longer needed for individual day checks
           dayNames={dayNames}
         />
 
@@ -259,3 +263,4 @@ export default function WorkstyleTrackerPage() {
     </div>
   );
 }
+
