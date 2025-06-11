@@ -16,16 +16,16 @@ export interface WorkStates { [key: string]: WorkState };
 export interface Metrics {
   pctCasa: string;
   pctOffice: string;
-  casa: number;
-  office: number;
-  ferias: number;
+  casa: number; // Dias em casa até hoje
+  office: number; // Dias no escritório até hoje
+  ferias: number; // Total de férias marcadas no mês
   holidaysInMonth: number;
   totalWorkdays: number;
   targetOfficeMin: number;
   officeNeeded: number;
-  workFromHomeDaysForAI: number;
-  workFromOfficeDaysForAI: number;
-  vacationDaysForAI: number;
+  workFromHomeDaysForAI: number; // Total de dias em casa marcados no mês (para cálculo da meta)
+  workFromOfficeDaysForAI: number; // Total de dias no escritório marcados no mês (para cálculo da meta)
+  vacationDaysForAI: number; // = ferias (Total de férias marcadas no mês)
 }
 
 const monthNames = [
@@ -36,40 +36,24 @@ const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const getDefaultHolidays = (month: number, year: number): string => {
   const holidaysList: number[] = [];
-  // month is 0-indexed (0 for January, 11 for December)
-  switch (month) {
-    case 0: // January
-      holidaysList.push(1); // New Year's Day
-      break;
-    case 3: // April
-      holidaysList.push(25); // Freedom Day
-      // Note: Good Friday is variable and needs to be added manually.
-      break;
-    case 4: // May
-      holidaysList.push(1); // Labour Day
-      break;
-    case 5: // June
-      holidaysList.push(10); // Portugal Day
-      holidaysList.push(13); // St. Anthony's Day (Lisbon)
-      // Note: Corpus Christi is variable and needs to be added manually.
-      break;
-    case 7: // August
-      holidaysList.push(15); // Assumption of Mary
-      break;
-    case 9: // October
-      holidaysList.push(5); // Republic Day
-      break;
-    case 10: // November
-      holidaysList.push(1); // All Saints' Day
-      break;
-    case 11: // December
-      holidaysList.push(1); // Restoration of Independence
-      holidaysList.push(8); // Immaculate Conception
-      holidaysList.push(25); // Christmas Day
-      break;
+  // Feriados Nacionais Fixos de Portugal
+  if (month === 0) holidaysList.push(1); // Ano Novo
+  if (month === 3) holidaysList.push(25); // Dia da Liberdade
+  if (month === 4) holidaysList.push(1); // Dia do Trabalhador
+  if (month === 5) {
+    holidaysList.push(10); // Dia de Portugal
+    if (year >= 1580) holidaysList.push(13); // Dia de Santo António (Feriado Municipal de Lisboa)
   }
-  // Carnival is also a variable holiday, typically in February or March, and needs manual addition if observed.
-  return holidaysList.join(',');
+  if (month === 7) holidaysList.push(15); // Assunção de Nossa Senhora
+  if (month === 9) holidaysList.push(5); // Implantação da República
+  if (month === 10) holidaysList.push(1); // Dia de Todos os Santos
+  if (month === 11) {
+    holidaysList.push(1); // Restauração da Independência
+    holidaysList.push(8); // Imaculada Conceição
+    holidaysList.push(25); // Natal
+  }
+  // Feriados móveis como Carnaval, Sexta-feira Santa, Páscoa, Corpo de Deus precisam ser adicionados manualmente.
+  return holidaysList.filter((day, index, self) => self.indexOf(day) === index).sort((a,b) => a-b).join(',');
 };
 
 
@@ -89,13 +73,13 @@ export default function WorkstyleTrackerPage() {
 
   useEffect(() => {
     const now = new Date();
-    setCurrentDate(now);
+    setCurrentDate(now); // Correctly initialized here, after mount for client-side
     const initialMonth = now.getMonth();
     const initialYear = now.getFullYear();
     setCurrentMonth(initialMonth);
     setCurrentYear(initialYear);
     setHolidays(getDefaultHolidays(initialMonth, initialYear));
-  }, []); 
+  }, []);
 
   const today = useMemo(() => currentDate ? currentDate.getDate() : 0, [currentDate]);
   const actualMonth = useMemo(() => currentDate ? currentDate.getMonth() : 0, [currentDate]);
@@ -104,7 +88,7 @@ export default function WorkstyleTrackerPage() {
   const holidayDays = useMemo(() => holidays
     .split(',')
     .map(h => parseInt(h.trim(), 10))
-    .filter(h => !isNaN(h) && h > 0 && h <= 31), [holidays]); // Added validation for day numbers
+    .filter(h => !isNaN(h) && h > 0 && h <= 31), [holidays]); 
 
   const daysInMonth = useMemo(() => {
     if (!currentDate) return 0; 
@@ -146,13 +130,13 @@ export default function WorkstyleTrackerPage() {
         newMonth = newMonth === 11 ? 0 : newMonth + 1;
         newYear = newMonth === 0 ? newYear + 1 : newYear;
       }
-      setCurrentYear(newYear); // Update year state
+      setCurrentYear(newYear); 
       setWorkStates({}); 
-      setHolidays(getDefaultHolidays(newMonth, newYear)); // Set default holidays for the new month/year
+      setHolidays(getDefaultHolidays(newMonth, newYear)); 
       // setGenAIRecommendation(null); 
-      return newMonth; // This becomes the new currentMonth
+      return newMonth; 
     });
-  }, [currentYear]); // currentYear is a dependency
+  }, [currentYear]); 
 
   const metrics = useMemo<Metrics>(() => {
     if (!currentDate) { 
@@ -163,32 +147,31 @@ export default function WorkstyleTrackerPage() {
       };
     }
 
-    let casa = 0, office = 0;
-    
-    let workFromHomeDaysForAI = 0;
-    let workFromOfficeDaysForAI = 0;
-    let vacationDaysForAI = 0;
+    let workFromHomeDaysForMonth = 0; // Renamed for clarity: total for month used for percentages and AI
+    let workFromOfficeDaysForMonth = 0; // Renamed for clarity: total for month used for percentages and AI
+    let vacationDaysForMonth = 0;       // Renamed for clarity: total for month
 
     for (let d = 1; d <= daysInMonth; d++) {
       if (!isWeekend(d) && !holidayDays.includes(d)) {
         const st = workStates[d];
-        if (st === 'casa') workFromHomeDaysForAI++;
-        else if (st === 'escritorio') workFromOfficeDaysForAI++;
-        else if (st === 'ferias') vacationDaysForAI++;
+        if (st === 'casa') workFromHomeDaysForMonth++;
+        else if (st === 'escritorio') workFromOfficeDaysForMonth++;
+        else if (st === 'ferias') vacationDaysForMonth++;
       } else if (workStates[d] === 'ferias' && (isWeekend(d) || holidayDays.includes(d))) {
-        // If a weekend/holiday is explicitly marked as 'ferias', count it as vacation.
-        vacationDaysForAI++;
+        vacationDaysForMonth++;
       }
     }
     
     const isCurrentActualMonthAndYear = currentMonth === actualMonth && currentYear === actualYear;
     const dayLimitForCurrentStats = isCurrentActualMonthAndYear ? today : daysInMonth;
 
+    // 'casaToday' e 'officeToday' são para os contadores "até hoje"
+    let casaToday = 0, officeToday = 0;
     for (let d = 1; d <= dayLimitForCurrentStats; d++) {
       if (!isWeekend(d) && !holidayDays.includes(d)) {
         const st = workStates[d];
-        if (st === 'casa') casa++;
-        else if (st === 'escritorio') office++;
+        if (st === 'casa') casaToday++;
+        else if (st === 'escritorio') officeToday++;
       }
     }
     
@@ -199,26 +182,28 @@ export default function WorkstyleTrackerPage() {
       }
     }
     
-    const totalMarkedUpToLimitDay = casa + office;
-    const pctCasa = totalMarkedUpToLimitDay > 0 ? (casa / totalMarkedUpToLimitDay) * 100 : 0;
-    const pctOffice = totalMarkedUpToLimitDay > 0 ? (office / totalMarkedUpToLimitDay) * 0 : 0; // Corrected logic for pctOffice
+    // Calcular percentagens com base nos totais do mês inteiro (workFromHomeDaysForMonth, workFromOfficeDaysForMonth)
+    const totalMarkedWorkdaysForMonth = workFromHomeDaysForMonth + workFromOfficeDaysForMonth;
+    const pctCasaCalculated = totalMarkedWorkdaysForMonth > 0 ? (workFromHomeDaysForMonth / totalMarkedWorkdaysForMonth) * 100 : 0;
+    const pctOfficeCalculated = totalMarkedWorkdaysForMonth > 0 ? (workFromOfficeDaysForMonth / totalMarkedWorkdaysForMonth) * 100 : 0;
     
     const targetOfficeMin = Math.ceil(totalWorkdaysInMonth * (officeGoalPercentage / 100));
-    const officeNeeded = Math.max(0, targetOfficeMin - workFromOfficeDaysForAI); 
+    // officeNeeded usa workFromOfficeDaysForMonth porque a meta é para o mês inteiro
+    const officeNeeded = Math.max(0, targetOfficeMin - workFromOfficeDaysForMonth); 
 
     return {
-      pctCasa: pctCasa.toFixed(1),
-      pctOffice: pctOffice.toFixed(1),
-      casa, 
-      office, 
-      ferias: vacationDaysForAI,
+      pctCasa: pctCasaCalculated.toFixed(1),
+      pctOffice: pctOfficeCalculated.toFixed(1),
+      casa: casaToday, 
+      office: officeToday, 
+      ferias: vacationDaysForMonth,
       holidaysInMonth: holidayDays.length,
       totalWorkdays: totalWorkdaysInMonth, 
       targetOfficeMin,
       officeNeeded,
-      workFromHomeDaysForAI, 
-      workFromOfficeDaysForAI, 
-      vacationDaysForAI, 
+      workFromHomeDaysForAI: workFromHomeDaysForMonth, // Passa o total do mês para a IA
+      workFromOfficeDaysForAI: workFromOfficeDaysForMonth, // Passa o total do mês para a IA
+      vacationDaysForAI: vacationDaysForMonth, // Passa o total do mês para a IA
     };
   }, [currentMonth, currentYear, today, daysInMonth, actualMonth, actualYear, workStates, holidayDays, isWeekend, officeGoalPercentage, currentDate]);
 
@@ -260,9 +245,9 @@ export default function WorkstyleTrackerPage() {
         <StatsDashboard metrics={metrics} />
         
         <AlertMessage
-          pctCasa={metrics.pctCasa}
+          pctCasa={metrics.pctCasa} // Este pctCasa agora reflete o mês inteiro
           officeNeededForPolicy={metrics.officeNeeded} 
-          wfhLimit={60}
+          wfhLimit={60} // Este é um exemplo, pode ser ajustado
         />
       </div>
     </div>

@@ -21,11 +21,11 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ metrics }) => {
         <div>
           <h3 className="text-md font-semibold text-indigo-100 mb-2 flex items-center">
             <CalendarOff className="mr-2 h-4 w-4 opacity-80" />
-            Ausências Programadas
+            Ausências Programadas (Mês Completo)
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <StatCard label="Feriados no Mês" value={metrics.holidaysInMonth} />
-            <StatCard label="Férias Marcadas no Mês" value={metrics.vacationDaysForAI} />
+            <StatCard label="Férias Marcadas no Mês" value={metrics.ferias} />
           </div>
         </div>
 
@@ -46,7 +46,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ metrics }) => {
         <div>
           <h3 className="text-md font-semibold text-indigo-100 mb-2 flex items-center">
             <Percent className="mr-2 h-4 w-4 opacity-80" />
-            Percentagens (até hoje)
+            Percentagens (Dias Marcados no Mês)
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <StatCard label="% Casa" value={`${metrics.pctCasa}%`} />
