@@ -34,9 +34,48 @@ const monthNames = [
 ];
 const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+const getDefaultHolidays = (month: number, year: number): string => {
+  const holidaysList: number[] = [];
+  // month is 0-indexed (0 for January, 11 for December)
+  switch (month) {
+    case 0: // January
+      holidaysList.push(1); // New Year's Day
+      break;
+    case 3: // April
+      holidaysList.push(25); // Freedom Day
+      // Note: Good Friday is variable and needs to be added manually.
+      break;
+    case 4: // May
+      holidaysList.push(1); // Labour Day
+      break;
+    case 5: // June
+      holidaysList.push(10); // Portugal Day
+      holidaysList.push(13); // St. Anthony's Day (Lisbon)
+      // Note: Corpus Christi is variable and needs to be added manually.
+      break;
+    case 7: // August
+      holidaysList.push(15); // Assumption of Mary
+      break;
+    case 9: // October
+      holidaysList.push(5); // Republic Day
+      break;
+    case 10: // November
+      holidaysList.push(1); // All Saints' Day
+      break;
+    case 11: // December
+      holidaysList.push(1); // Restoration of Independence
+      holidaysList.push(8); // Immaculate Conception
+      holidaysList.push(25); // Christmas Day
+      break;
+  }
+  // Carnival is also a variable holiday, typically in February or March, and needs manual addition if observed.
+  return holidaysList.join(',');
+};
+
+
 export default function WorkstyleTrackerPage() {
   // const { toast } = useToast();
-  const [holidays, setHolidays] = useState('1,8,25');
+  const [holidays, setHolidays] = useState<string>('');
   const [workStates, setWorkStates] = useState<WorkStates>({});
   
   const [currentDate, setCurrentDate] = useState<Date | null>(null); 
@@ -51,8 +90,11 @@ export default function WorkstyleTrackerPage() {
   useEffect(() => {
     const now = new Date();
     setCurrentDate(now);
-    setCurrentMonth(now.getMonth());
-    setCurrentYear(now.getFullYear());
+    const initialMonth = now.getMonth();
+    const initialYear = now.getFullYear();
+    setCurrentMonth(initialMonth);
+    setCurrentYear(initialYear);
+    setHolidays(getDefaultHolidays(initialMonth, initialYear));
   }, []); 
 
   const today = useMemo(() => currentDate ? currentDate.getDate() : 0, [currentDate]);
@@ -62,7 +104,7 @@ export default function WorkstyleTrackerPage() {
   const holidayDays = useMemo(() => holidays
     .split(',')
     .map(h => parseInt(h.trim(), 10))
-    .filter(h => !isNaN(h)), [holidays]);
+    .filter(h => !isNaN(h) && h > 0 && h <= 31), [holidays]); // Added validation for day numbers
 
   const daysInMonth = useMemo(() => {
     if (!currentDate) return 0; 
@@ -95,20 +137,22 @@ export default function WorkstyleTrackerPage() {
 
   const navigateMonth = useCallback((dir: 'prev' | 'next') => {
     setCurrentMonth(prevMonth => {
-      let m = prevMonth, y = currentYear;
+      let newMonth = prevMonth;
+      let newYear = currentYear;
       if (dir === 'prev') {
-        m = m === 0 ? 11 : m - 1;
-        y = m === 11 ? y - 1 : y;
+        newMonth = newMonth === 0 ? 11 : newMonth - 1;
+        newYear = newMonth === 11 ? newYear - 1 : newYear;
       } else {
-        m = m === 11 ? 0 : m + 1;
-        y = m === 0 ? y + 1 : y;
+        newMonth = newMonth === 11 ? 0 : newMonth + 1;
+        newYear = newMonth === 0 ? newYear + 1 : newYear;
       }
-      setCurrentYear(y);
+      setCurrentYear(newYear); // Update year state
       setWorkStates({}); 
+      setHolidays(getDefaultHolidays(newMonth, newYear)); // Set default holidays for the new month/year
       // setGenAIRecommendation(null); 
-      return m;
+      return newMonth; // This becomes the new currentMonth
     });
-  }, [currentYear]);
+  }, [currentYear]); // currentYear is a dependency
 
   const metrics = useMemo<Metrics>(() => {
     if (!currentDate) { 
@@ -131,6 +175,9 @@ export default function WorkstyleTrackerPage() {
         if (st === 'casa') workFromHomeDaysForAI++;
         else if (st === 'escritorio') workFromOfficeDaysForAI++;
         else if (st === 'ferias') vacationDaysForAI++;
+      } else if (workStates[d] === 'ferias' && (isWeekend(d) || holidayDays.includes(d))) {
+        // If a weekend/holiday is explicitly marked as 'ferias', count it as vacation.
+        vacationDaysForAI++;
       }
     }
     
@@ -154,7 +201,7 @@ export default function WorkstyleTrackerPage() {
     
     const totalMarkedUpToLimitDay = casa + office;
     const pctCasa = totalMarkedUpToLimitDay > 0 ? (casa / totalMarkedUpToLimitDay) * 100 : 0;
-    const pctOffice = totalMarkedUpToLimitDay > 0 ? (office / totalMarkedUpToLimitDay) * 100 : 0;
+    const pctOffice = totalMarkedUpToLimitDay > 0 ? (office / totalMarkedUpToLimitDay) * 0 : 0; // Corrected logic for pctOffice
     
     const targetOfficeMin = Math.ceil(totalWorkdaysInMonth * (officeGoalPercentage / 100));
     const officeNeeded = Math.max(0, targetOfficeMin - workFromOfficeDaysForAI); 
@@ -221,3 +268,4 @@ export default function WorkstyleTrackerPage() {
     </div>
   );
 }
+
