@@ -61,48 +61,48 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   return (
     <div
       className={cn(
-        "calendar-cell border rounded-lg p-2 transition-colors duration-150",
+        "calendar-cell border rounded-lg p-1.5 sm:p-2 transition-colors duration-150",
         cellBg,
         isToday ? 'border-2 border-primary shadow-md' : 'border-border'
       )}
     >
-      <div className={cn("font-medium text-sm mb-1 self-start", textColor, isToday ? "text-primary font-bold" : "")}>{day}</div>
+      <div className={cn("font-medium text-xs sm:text-sm mb-1 self-start", textColor, isToday ? "text-primary font-bold" : "")}>{day}</div>
       
       {!isWeekend && !isHoliday && (
-        <div className="space-y-1.5 text-xs mt-auto">
-          <Label htmlFor={`ferias-${day}`} className={cn("flex items-center cursor-pointer")}>
+        <div className="space-y-1 sm:space-y-1.5 text-xs mt-auto">
+          <Label htmlFor={`ferias-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs")}>
             <Checkbox
               id={`ferias-${day}`}
               checked={workState === 'ferias'}
               onCheckedChange={() => handleCheckedChange('ferias')(workState !== 'ferias')}
-              className="mr-1.5 size-4"
+              className="mr-1 sm:mr-1.5 size-3.5 sm:size-4"
             />
             🏖️ Férias
           </Label>
-          <Label htmlFor={`casa-${day}`} className={cn("flex items-center cursor-pointer", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
+          <Label htmlFor={`casa-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
             <Checkbox
               id={`casa-${day}`}
               checked={workState === 'casa'}
               onCheckedChange={() => handleCheckedChange('casa')(workState !== 'casa')}
               disabled={workState === 'ferias'}
-              className="mr-1.5 size-4"
+              className="mr-1 sm:mr-1.5 size-3.5 sm:size-4"
             />
             🏠 Casa
           </Label>
-          <Label htmlFor={`escritorio-${day}`} className={cn("flex items-center cursor-pointer", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
+          <Label htmlFor={`escritorio-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs", workState === 'ferias' ? "cursor-not-allowed opacity-50" : "")}>
             <Checkbox
               id={`escritorio-${day}`}
               checked={workState === 'escritorio'}
               onCheckedChange={() => handleCheckedChange('escritorio')(workState !== 'escritorio')}
               disabled={workState === 'ferias'}
-              className="mr-1.5 size-4"
+              className="mr-1 sm:mr-1.5 size-3.5 sm:size-4"
             />
             🏢 Escritório
           </Label>
         </div>
       )}
       {statusText && (isWeekend || isHoliday || workState) && (
-         <div className={cn("mt-1.5 px-2 py-0.5 rounded text-[10px] text-center font-medium", statusBg)}>
+         <div className={cn("mt-1.5 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] text-center font-medium", statusBg)}>
            {statusText}
          </div>
       )}
