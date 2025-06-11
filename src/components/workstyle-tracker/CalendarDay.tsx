@@ -7,13 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import type { WorkState } from '@/app/page';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Home, Briefcase, Palmtree, XCircle, Edit3 } from 'lucide-react';
+import { Home, Briefcase, Palmtree, XCircle, Edit3, PartyPopper } from 'lucide-react';
 
 interface CalendarDayProps {
   day: number;
   isToday: boolean;
   isWeekend: boolean;
-  isHoliday: boolean;
   workState?: WorkState;
   onSetWorkState: (day: number, state?: WorkState) => void;
 }
@@ -22,26 +21,26 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   day,
   isToday,
   isWeekend,
-  isHoliday,
   workState,
   onSetWorkState,
 }) => {
   const isMobile = useIsMobile();
+  const isActuallyHoliday = workState === 'feriado';
 
   let cellBg = 'bg-card hover:bg-muted/20';
-  let statusText = ''; // For the bottom badge
-  let statusBg = '';   // For the bottom badge
+  let statusText = ''; 
+  let statusBg = '';   
   let textColor = 'text-foreground';
 
-  if (isHoliday) {
-    cellBg = 'bg-destructive/10';
+  if (isActuallyHoliday) {
+    cellBg = 'bg-orange-500/10 hover:bg-orange-500/20'; // Orange for holiday
     statusText = 'Feriado';
-    statusBg = 'bg-destructive text-destructive-foreground';
-    textColor = isMobile ? 'text-destructive' : 'text-destructive-foreground';
+    statusBg = 'bg-orange-500 text-white';
+    textColor = isMobile ? 'text-orange-700 dark:text-orange-400' : 'text-orange-700 dark:text-orange-400';
   } else if (isWeekend) {
     cellBg = 'bg-muted/30';
     textColor = 'text-muted-foreground';
-    statusText = isMobile ? 'FDS' : 'Fim de Semana'; // Abreviado para mobile
+    statusText = isMobile ? 'FDS' : 'Fim de Semana';
     statusBg = 'bg-muted text-muted-foreground';
   } else if (workState === 'casa') {
     cellBg = 'bg-green-500/10 hover:bg-green-500/20';
@@ -61,11 +60,14 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   }
 
   const renderWorkStateIcon = (state?: WorkState, className?: string) => {
+    if (state === 'feriado') return <PartyPopper className={cn("w-3 h-3 sm:w-4 sm:h-4", className)} />;
     if (state === 'ferias') return <Palmtree className={cn("w-3 h-3 sm:w-4 sm:h-4", className)} />;
     if (state === 'casa') return <Home className={cn("w-3 h-3 sm:w-4 sm:h-4", className)} />;
     if (state === 'escritorio') return <Briefcase className={cn("w-3 h-3 sm:w-4 sm:h-4", className)} />;
     return <Edit3 className={cn("w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground", className)} />;
   };
+
+  const disableCasaEscritorio = isActuallyHoliday || workState === 'ferias';
 
   return (
     <div
@@ -77,8 +79,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
     >
       <div className={cn("font-medium text-xs sm:text-sm self-start", textColor, isToday ? "text-primary font-bold" : "")}>{day}</div>
       
-      {!isWeekend && !isHoliday && (
-        <div className="mt-1">
+      <div className="mt-1">
           {isMobile ? (
             <Select
               value={workState || 'none'}
@@ -97,19 +98,31 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
                 <SelectItem value="none" className="text-xs py-1">
                   <XCircle className="w-3 h-3 mr-1.5" /> Nenhum
                 </SelectItem>
+                 <SelectItem value="feriado" className="text-xs py-1">
+                  <PartyPopper className="w-3 h-3 mr-1.5" /> Feriado
+                </SelectItem>
                 <SelectItem value="ferias" className="text-xs py-1">
                   <Palmtree className="w-3 h-3 mr-1.5" /> Férias
                 </SelectItem>
-                <SelectItem value="casa" className="text-xs py-1">
+                <SelectItem value="casa" className="text-xs py-1" disabled={disableCasaEscritorio && workState !=='casa'}>
                   <Home className="w-3 h-3 mr-1.5" /> Casa
                 </SelectItem>
-                <SelectItem value="escritorio" className="text-xs py-1">
+                <SelectItem value="escritorio" className="text-xs py-1" disabled={disableCasaEscritorio && workState !=='escritorio'}>
                   <Briefcase className="w-3 h-3 mr-1.5" /> Escritório
                 </SelectItem>
               </SelectContent>
             </Select>
           ) : (
             <div className="space-y-1 sm:space-y-1.5 text-xs">
+              <Label htmlFor={`feriado-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs")}>
+                <Checkbox
+                  id={`feriado-${day}`}
+                  checked={isActuallyHoliday}
+                  onCheckedChange={(_checked) => onSetWorkState(day, isActuallyHoliday ? undefined : 'feriado')}
+                  className="mr-1 sm:mr-1.5 size-3.5 sm:size-4"
+                />
+                🎉 Feriado
+              </Label>
               <Label htmlFor={`ferias-${day}`} className={cn("flex items-center cursor-pointer text-[11px] sm:text-xs")}>
                 <Checkbox
                   id={`ferias-${day}`}
@@ -124,7 +137,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
                   id={`casa-${day}`}
                   checked={workState === 'casa'}
                   onCheckedChange={(_checked) => onSetWorkState(day, workState === 'casa' ? undefined : 'casa')}
-                  disabled={workState === 'ferias'}
+                  disabled={disableCasaEscritorio}
                   className="mr-1 sm:mr-1.5 size-3.5 sm:size-4"
                 />
                 🏠 Casa
@@ -134,7 +147,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
                   id={`escritorio-${day}`}
                   checked={workState === 'escritorio'}
                   onCheckedChange={(_checked) => onSetWorkState(day, workState === 'escritorio' ? undefined : 'escritorio')}
-                  disabled={workState === 'ferias'}
+                  disabled={disableCasaEscritorio}
                   className="mr-1 sm:mr-1.5 size-3.5 sm:size-4"
                 />
                 🏢 Escritório
@@ -142,19 +155,18 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
             </div>
           )}
         </div>
-      )}
-      {statusText && (isWeekend || isHoliday || (!isMobile && workState) ) && (
+      
+      {statusText && (isWeekend || isActuallyHoliday || (!isMobile && workState) ) && (
          <div className={cn(
             "mt-1.5 px-1 py-0.5 sm:px-2 rounded text-[9px] sm:text-[10px] text-center font-medium",
              statusBg,
-             isHoliday && isMobile ? "text-destructive-foreground" : "" // ensure holiday text is visible on mobile
+             isActuallyHoliday && isMobile ? "text-white" : "" 
            )}
           >
            {statusText}
          </div>
       )}
-       {/* Placeholder for mobile to maintain height consistency if no status badge is shown */}
-       {isMobile && !isWeekend && !isHoliday && !statusText && <div className="h-[19px] mt-1.5"></div>}
+       {isMobile && !isWeekend && !isActuallyHoliday && !statusText && <div className="h-[19px] mt-1.5"></div>}
 
     </div>
   );

@@ -10,7 +10,6 @@ interface CalendarGridProps {
   currentMonth: number;
   daysInMonth: number;
   firstDayOfMonth: number;
-  holidayDays: number[];
   workStates: WorkStates;
   onSetWorkState: (day: number, state?: WorkState) => void;
   isWeekend: (day: number) => boolean;
@@ -25,7 +24,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   currentMonth,
   daysInMonth,
   firstDayOfMonth,
-  holidayDays,
   workStates,
   onSetWorkState,
   isWeekend,
@@ -44,7 +42,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       const isCurrentActualMonth = currentMonth === actualMonth && currentYear === actualYear;
       const isTodayMarker = isCurrentActualMonth && d === today;
       const dayIsWeekend = isWeekend(d);
-      const dayIsHoliday = holidayDays.includes(d);
       const workState = workStates[d];
 
       cells.push(
@@ -53,7 +50,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           day={d}
           isToday={isTodayMarker}
           isWeekend={dayIsWeekend}
-          isHoliday={dayIsHoliday}
           workState={workState}
           onSetWorkState={onSetWorkState}
         />
@@ -65,7 +61,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   return (
     <Card className="rounded-lg shadow-xl p-3 sm:p-4 mb-6">
       <div className="grid grid-cols-7 text-center text-xs sm:text-sm font-medium mb-2 text-muted-foreground">
-        {dayNames.map(d => <div key={d} className="py-1">{d}</div>)}
+        {dayNames.map(dName => <div key={dName} className="py-1">{dName}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {renderCalendarDays()}
