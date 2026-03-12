@@ -1,43 +1,40 @@
 "use client";
-import React from 'react';
+
+import React from "react";
+import { CheckCircle2, TriangleAlert } from "lucide-react";
+import type { GoalMode } from "@/app/page";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TriangleAlert, CheckCircle2 } from 'lucide-react';
 
 interface AlertMessageProps {
+  goalMode: GoalMode;
   pctCasa: string;
-  officeNeededForPolicy: number; // For the 40% office goal
-  wfhLimit: number; // e.g., 60%
+  officeNeededForPolicy: number;
+  officeGoalPercentage: number;
 }
 
-const AlertMessage: React.FC<AlertMessageProps> = ({ pctCasa, officeNeededForPolicy, wfhLimit }) => {
+const AlertMessage: React.FC<AlertMessageProps> = ({
+  goalMode,
+  pctCasa,
+  officeNeededForPolicy,
+  officeGoalPercentage,
+}) => {
   const currentPctCasa = parseFloat(pctCasa);
+  const wfhLimit = Math.max(0, 100 - officeGoalPercentage);
   const isOverWfhThreshold = currentPctCasa > wfhLimit;
+  const periodLabel = goalMode === "monthly" ? "este mes" : "este trimestre";
 
-  // Determine the message based on the 60% WFH limit.
-  // The officeNeededForPolicy is for the 40% office attendance.
-  
-  let title, description, variant: "default" | "destructive", Icon;
-
-  if (isOverWfhThreshold) {
-    title = "Atenção ao Limite de Trabalho Remoto!";
-    description = `Está com ${pctCasa}% de trabalho em casa, excedendo o limite de ${wfhLimit}%. Para cumprir a política de 40% de presença no escritório, ainda precisa de ${officeNeededForPolicy} dia(s) no escritório este mês.`;
-    variant = "destructive";
-    Icon = TriangleAlert;
-  } else {
-    title = "Gestão de Trabalho Remoto em Dia!";
-    description = `Atualmente com ${pctCasa}% de trabalho em casa, está dentro do limite de ${wfhLimit}%. Para cumprir a política de 40% de presença no escritório, precisa de ${officeNeededForPolicy} dia(s) no escritório este mês.`;
-    variant = "default"; // Using default which often has a less alarming color like primary or accent.
-    Icon = CheckCircle2;
-  }
+  const Icon = isOverWfhThreshold ? TriangleAlert : CheckCircle2;
+  const title = isOverWfhThreshold ? "Atencao ao limite de trabalho remoto" : "Gestao de trabalho remoto em dia";
+  const description = isOverWfhThreshold
+    ? `Esta com ${pctCasa}% de trabalho em casa, acima do limite de ${wfhLimit}%. Para cumprir a politica de ${officeGoalPercentage}% de presenca no escritorio, ainda precisa de ${officeNeededForPolicy} dia(s) de escritorio ${periodLabel}.`
+    : `Atualmente esta com ${pctCasa}% de trabalho em casa, dentro do limite de ${wfhLimit}%. Para cumprir a politica de ${officeGoalPercentage}% de presenca no escritorio, precisa de ${officeNeededForPolicy} dia(s) de escritorio ${periodLabel}.`;
 
   return (
-    <Alert variant={variant} className={cn("mb-6 shadow-md", variant === "default" ? "bg-accent border-primary/30" : "")}>
+    <Alert variant={isOverWfhThreshold ? "destructive" : "default"} className={cn("mb-6 shadow-md", !isOverWfhThreshold && "bg-accent border-primary/30")}>
       <Icon className="h-5 w-5" />
       <AlertTitle className="font-headline">{title}</AlertTitle>
-      <AlertDescription>
-        {description}
-      </AlertDescription>
+      <AlertDescription>{description}</AlertDescription>
     </Alert>
   );
 };
