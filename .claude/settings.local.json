@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python:*)",
+      "Bash(notebooklm:*)",
+      "Bash(tasklist:*)",
+      "Bash(ls:*)",
+      "Read(//c/Users/EXPERIS/hotel-finder/**)",
+      "Bash(chmod +x setup.sh run.sh hotel_finder.py)",
+      "Bash(chmod +x:*)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(py:*)",
+      "Bash(pip list:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

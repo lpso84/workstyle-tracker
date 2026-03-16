@@ -1,19 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { RotateCcw } from "lucide-react";
-import HeaderControls from "@/components/workstyle-tracker/HeaderControls";
-import OfficeGoalInput from "@/components/workstyle-tracker/OfficeGoalInput";
-import QuarterGoalInput from "@/components/workstyle-tracker/QuarterGoalInput";
+import { ChevronLeft, ChevronRight, MapPin, RotateCcw } from "lucide-react";
 import CalendarGrid from "@/components/workstyle-tracker/CalendarGrid";
 import StatsDashboard from "@/components/workstyle-tracker/StatsDashboard";
 import AlertMessage from "@/components/workstyle-tracker/AlertMessage";
-import LegendDisplay from "@/components/workstyle-tracker/LegendDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type WorkState = "casa" | "escritorio" | "ferias" | "feriado" | "sickday";
 export type GoalMode = "monthly" | "quarterly";
@@ -586,12 +590,6 @@ export default function WorkstyleTrackerPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto max-w-6xl p-4 md:p-8">
-        <HeaderControls
-          currentMonth={currentMonth}
-          currentYear={currentYear}
-          monthNames={monthNames}
-          onNavigate={navigateMonth}
-        />
 
         <Card className="mb-6 shadow-lg">
           <CardHeader>
@@ -602,7 +600,7 @@ export default function WorkstyleTrackerPage() {
             <RadioGroup
               value={goalMode}
               onValueChange={(value: string) => setGoalMode(value as GoalMode)}
-              className="grid gap-4 md:grid-cols-2"
+              className="grid gap-4"
             >
               <Label
                 htmlFor="goal-mode-monthly"
@@ -625,32 +623,85 @@ export default function WorkstyleTrackerPage() {
                 </div>
               </Label>
             </RadioGroup>
+
+            {/* Configurações do modo selecionado */}
+            <div className="mt-6 pt-6 border-t border-border">
+              <Label htmlFor="office-goal-input" className="mb-2 block text-sm font-medium">
+                Percentagem minima no escritorio
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="office-goal-input"
+                  type="number"
+                  value={goalMode === "monthly" ? officeGoalPercentage : quarterOfficeGoalPercentage}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value)) {
+                      if (goalMode === "monthly") {
+                        setOfficeGoalPercentage(Math.max(0, Math.min(100, value)));
+                      } else {
+                        setQuarterOfficeGoalPercentage(Math.max(0, Math.min(100, value)));
+                      }
+                    } else if (e.target.value === "") {
+                      if (goalMode === "monthly") {
+                        setOfficeGoalPercentage(0);
+                      } else {
+                        setQuarterOfficeGoalPercentage(0);
+                      }
+                    }
+                  }}
+                  min="0"
+                  max="100"
+                  className="w-24 text-sm"
+                />
+                <span className="text-sm font-medium">%</span>
+              </div>
+
+              {goalMode === "quarterly" && (
+                <>
+                  <div className="mt-4">
+                    <Label htmlFor="quarter-start-month" className="mb-2 block text-sm font-medium">
+                      Mes de inicio do trimestre
+                    </Label>
+                    <Select
+                      value={quarterStartMonth.toString()}
+                      onValueChange={(value: string) => setQuarterStartMonth(parseInt(value, 10))}
+                    >
+                      <SelectTrigger id="quarter-start-month">
+                        <SelectValue placeholder="Escolha o mes inicial" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {monthNames.map((monthName: string, index: number) => (
+                          <SelectItem key={monthName} value={index.toString()}>
+                            {monthName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      O ciclo repete-se de 3 em 3 meses a partir deste mes em todos os anos.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </CardContent>
         </Card>
-
-        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <OfficeGoalInput
-            officeGoalPercentage={officeGoalPercentage}
-            onOfficeGoalChange={setOfficeGoalPercentage}
-            disabled={goalMode !== "monthly"}
-          />
-          <QuarterGoalInput
-            monthNames={monthNames}
-            quarterOfficeGoalPercentage={quarterOfficeGoalPercentage}
-            quarterStartMonth={quarterStartMonth}
-            onQuarterGoalChange={setQuarterOfficeGoalPercentage}
-            onQuarterStartMonthChange={setQuarterStartMonth}
-            disabled={goalMode !== "quarterly"}
-          />
-        </div>
-
-        <LegendDisplay />
 
         <div className="mb-6 flex justify-end">
           <Button variant="outline" onClick={handleResetData} className="shadow-md transition-shadow hover:shadow-lg">
             <RotateCcw className="mr-2 h-4 w-4" />
             Redefinir Dados
           </Button>
+        </div>
+
+        <div className="mb-6">
+          <HeaderControls
+            currentMonth={currentMonth}
+            currentYear={currentYear}
+            monthNames={monthNames}
+            onNavigate={navigateMonth}
+          />
         </div>
 
         <CalendarGrid
