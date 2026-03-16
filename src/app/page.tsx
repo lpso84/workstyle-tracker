@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, MapPin, RotateCcw } from "lucide-react";
 import CalendarGrid from "@/components/workstyle-tracker/CalendarGrid";
 import StatsDashboard from "@/components/workstyle-tracker/StatsDashboard";
 import AlertMessage from "@/components/workstyle-tracker/AlertMessage";
+import HeaderControls from "@/components/workstyle-tracker/HeaderControls";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
