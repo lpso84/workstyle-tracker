@@ -32,6 +32,7 @@ export interface PeriodMetrics {
   totalWorkdays: number;
   targetOfficeMin: number;
   officeNeeded: number;
+  weeklyOfficeAvgNeeded?: number;
 }
 
 interface MonthPeriodData {
@@ -299,6 +300,16 @@ const calculateQuarterlyMetrics = (
   const pctOffice =
     totalMarkedWorkdays > 0 ? ((workFromOfficeDaysToDate / totalMarkedWorkdays) * 100).toFixed(1) : "0.0";
   const targetOfficeMin = Math.ceil(totalWorkdaysQuarter * (officeGoalPercentage / 100));
+  const officeNeeded = Math.max(0, targetOfficeMin - workFromOfficeDaysToDate);
+
+  const lastQuarterMonth = months[months.length - 1];
+  const quarterEndDate = new Date(lastQuarterMonth.year, lastQuarterMonth.month + 1, 0);
+  const todayDate = new Date(actualYear, actualMonth, today);
+  const remainingMs = quarterEndDate.getTime() - todayDate.getTime();
+  const remainingWeeks = remainingMs / (7 * 24 * 60 * 60 * 1000);
+  const weeklyOfficeAvgNeeded = remainingWeeks > 0 && officeNeeded > 0
+    ? Math.ceil((officeNeeded / remainingWeeks) * 10) / 10
+    : 0;
 
   return {
     pctCasa,
@@ -310,7 +321,8 @@ const calculateQuarterlyMetrics = (
     holidaysInPeriod: holidaysQuarter,
     totalWorkdays: totalWorkdaysQuarter,
     targetOfficeMin,
-    officeNeeded: Math.max(0, targetOfficeMin - workFromOfficeDaysToDate),
+    officeNeeded,
+    weeklyOfficeAvgNeeded,
   };
 };
 

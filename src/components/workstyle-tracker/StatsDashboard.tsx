@@ -63,6 +63,18 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ goalMode, monthlyMetric
             <StatCard label="% Escritorio" value={`${metrics.pctOffice}%`} />
           </div>
         </div>
+
+        {goalMode === "quarterly" && metrics.weeklyOfficeAvgNeeded !== undefined && (
+          <div>
+            <h3 className="mb-2 flex items-center text-md font-semibold text-indigo-100">
+              <Briefcase className="mr-2 h-4 w-4 opacity-80" />
+              Ritmo Necessario
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              <StatCard label="Dias Escritorio por Semana (media para atingir meta)" value={metrics.weeklyOfficeAvgNeeded} highlight />
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
