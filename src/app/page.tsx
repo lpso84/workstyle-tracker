@@ -253,6 +253,8 @@ const calculateQuarterlyMetrics = (
 ): PeriodMetrics => {
   let workFromHomeDaysToDate = 0;
   let workFromOfficeDaysToDate = 0;
+  let homeDaysTotal = 0;
+  let officeDaysTotal = 0;
   let vacationDaysQuarter = 0;
   let sickDaysQuarter = 0;
   let holidaysQuarter = 0;
@@ -281,6 +283,11 @@ const calculateQuarterlyMetrics = (
 
       if (!isWeekend && stateOfDay !== "feriado" && stateOfDay !== "ferias" && stateOfDay !== "sickday") {
         totalWorkdaysQuarter++;
+        if (stateOfDay === "casa") {
+          homeDaysTotal++;
+        } else if (stateOfDay === "escritorio") {
+          officeDaysTotal++;
+        }
       }
 
       if (
@@ -299,12 +306,11 @@ const calculateQuarterlyMetrics = (
     }
   });
 
-  const totalMarkedWorkdays = workFromHomeDaysToDate + workFromOfficeDaysToDate;
-  const pctCasa = totalMarkedWorkdays > 0 ? ((workFromHomeDaysToDate / totalMarkedWorkdays) * 100).toFixed(1) : "0.0";
-  const pctOffice =
-    totalMarkedWorkdays > 0 ? ((workFromOfficeDaysToDate / totalMarkedWorkdays) * 100).toFixed(1) : "0.0";
+  const totalMarkedWorkdays = homeDaysTotal + officeDaysTotal;
+  const pctCasa = totalMarkedWorkdays > 0 ? ((homeDaysTotal / totalMarkedWorkdays) * 100).toFixed(1) : "0.0";
+  const pctOffice = totalMarkedWorkdays > 0 ? ((officeDaysTotal / totalMarkedWorkdays) * 100).toFixed(1) : "0.0";
   const targetOfficeMin = Math.ceil(totalWorkdaysQuarter * (officeGoalPercentage / 100));
-  const officeNeeded = Math.max(0, targetOfficeMin - workFromOfficeDaysToDate);
+  const officeNeeded = Math.max(0, targetOfficeMin - officeDaysTotal);
 
   return {
     pctCasa,

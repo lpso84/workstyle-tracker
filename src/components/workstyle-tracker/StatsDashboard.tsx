@@ -15,7 +15,7 @@ interface StatsDashboardProps {
 const StatsDashboard: React.FC<StatsDashboardProps> = ({ goalMode, monthlyMetrics, quarterlyMetrics }) => {
   const metrics = goalMode === "monthly" ? monthlyMetrics : quarterlyMetrics;
   const periodLabel = goalMode === "monthly" ? "Mes" : "Trimestre";
-  const progressLabel = goalMode === "monthly" ? "ate hoje" : "ate a data";
+  const progressLabel = "ate hoje";
 
   return (
     <Card className="mb-6 bg-gradient-to-br from-primary via-indigo-700 to-purple-700 text-white shadow-xl">
